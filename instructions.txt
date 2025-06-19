@@ -1,0 +1,23 @@
+Clone this repo
+cd custom-mcp-hosting-gcp/
+
+Make sure you have python installed.
+
+Run this cmd for installing uv
+pip install uv
+
+Run this cmd for installing requirements
+uv pip install -r requirements.txt
+
+The server code has been exposed on GCP, Run this cmd to allow it for serving requests from your pc.
+gcloud run services proxy mcp2-server --region=us-central1
+It will print like "Proxying to Cloud Run service [mcp2-server] in project [noble-anvil-460215-s8] region [us-central1]
+http://127.0.0.1:8080 proxies to https://mcp2-server-rxylsn62za-uc.a.run.app"
+
+Now run the mcp_client file using this cmd.
+uv run mcp_client.py
+It will run the client on your local.
+
+Now run this cmd for sending the queries.
+python3 mcp_client.py 
+
