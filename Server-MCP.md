@@ -178,16 +178,7 @@ python-dotenv>=0.19.0
 4. Add tests if applicable
 5. Submit a pull request
 
-## 📄 License
 
-[Add your license information here]
-
-## 🆘 Support
-
-For issues and questions:
-1. Check the GitHub Issues page
-2. Review the logs for error messages
-3. Ensure your GitHub token has the correct permissions
 
 ---
 
