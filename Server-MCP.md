@@ -170,13 +170,6 @@ python-dotenv>=0.19.0
 | `GITHUB_TOKEN` | GitHub Personal Access Token | Yes |
 | `PORT` | Server port (default: 8080) | No |
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
 
 
 
