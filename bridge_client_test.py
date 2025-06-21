@@ -186,7 +186,6 @@ class BridgeClient:
             return {"error": "Authentication failed"}
         
         headers = {"Authorization": f"{self.access_token}"}
-        print("headers", headers)
         
         async with aiohttp.ClientSession() as session:
             payload = {
@@ -218,18 +217,14 @@ class BridgeClient:
         # Ensure authentication
         if not await self.ensure_authenticated():
             return {"error": "Authentication failed"}
-        
-        print("call to available tools")
-        
+                
         headers = {"Authorization": f"Bearer {self.access_token}"}
 
-        print("headers", headers)
         
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.get(f"{self.bridge_url}/tools", headers=headers) as response:
                     if response.status == 200:
-                        print("got ok response ", response.json())
                         return await response.json()
                     elif response.status == 401:
                         print("🔐 Authentication expired. Please login again.")
@@ -243,7 +238,7 @@ class BridgeClient:
 async def interactive_chat():
     """Interactive chat interface with authentication"""
     client = BridgeClient()
-    print("client.access_token ",client.access_token)
+    # print("client.access_token ",client.access_token)
     
     print("🤖 ChatGPT & Claude MCP Bridge Client (with OAuth)")
     print("="*50)

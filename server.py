@@ -99,39 +99,10 @@ github_client = GitHubClient(GITHUB_TOKEN) if GITHUB_TOKEN else None
 
 # OAuth Routes
 # app = mcp.app
-# @mcp.tool()
-@app.post("/tools/add")
-def add(a: int, b: int, current_user: Dict[str, Any] = Depends(get_current_user)) -> int:
-    """Use this to add two numbers together.
-    
-    Args:
-        a: The first number.
-        b: The second number.
-    
-    Returns:
-        The sum of the two numbers.
-    """
-    logger.info(f">>> Tool: 'add' called with numbers '{a}' and '{b}'")
-    return a + b
-
-# @mcp.tool()
-@app.post("/tools/subtract")
-def subtract(a: int, b: int, current_user: Dict[str, Any] = Depends(get_current_user)) -> int:
-    """Use this to subtract two numbers.
-    
-    Args:
-        a: The first number.
-        b: The second number.
-    
-    Returns:
-        The difference of the two numbers.
-    """
-    logger.info(f">>> Tool: 'subtract' called with numbers '{a}' and '{b}'")
-    return a - b
 
 # @mcp.tool()
 @app.post("/tools/list_repositories")
-async def list_repositories(username: Optional[str] = None, current_user: Dict[str, Any] = Depends(get_current_user)) -> List[Dict[str, Any]]:
+async def list_repositories(username: Optional[str] = None) -> List[Dict[str, Any]]:
     """List repositories for the authenticated user or a specific username.
     
     Args:
@@ -143,7 +114,7 @@ async def list_repositories(username: Optional[str] = None, current_user: Dict[s
     if not github_client:
         raise Exception("GitHub token not configured")
     
-    logger.info(f">>> Tool: 'list_repositories' called by user {current_user.get('email')} for user '{username or 'authenticated user'}'")
+    logger.info(f">>> Tool: 'list_repositories' called for user '{username or 'authenticated user'}'")
     
     if username:
         endpoint = f"/users/{username}/repos"
@@ -171,7 +142,7 @@ async def list_repositories(username: Optional[str] = None, current_user: Dict[s
 
 # @mcp.tool()
 @app.post("/tools/get_repository_contents")
-async def get_repository_contents(owner: str, repo: str, path: str = "", current_user: Dict[str, Any] = Depends(get_current_user)) -> List[Dict[str, Any]]:
+async def get_repository_contents(owner: str, repo: str, path: str = "") -> List[Dict[str, Any]]:
     """Get contents of a repository directory or file.
     
     Args:
@@ -185,7 +156,7 @@ async def get_repository_contents(owner: str, repo: str, path: str = "", current
     if not github_client:
         raise Exception("GitHub token not configured")
     
-    logger.info(f">>> Tool: 'get_repository_contents' called by {current_user.get('email')} for {owner}/{repo} path '{path}'")
+    logger.info(f">>> Tool: 'get_repository_contents' called for {owner}/{repo} path '{path}'")
     
     endpoint = f"/repos/{owner}/{repo}/contents/{path}"
     contents = await github_client.make_request(endpoint)
@@ -206,44 +177,10 @@ async def get_repository_contents(owner: str, repo: str, path: str = "", current
         for item in contents
     ]
 
-# @mcp.tool()
-# async def get_file_content(owner: str, repo: str, path: str) -> Dict[str, Any]:
-#     """Get the content of a specific file from a repository.
-    
-#     Args:
-#         owner: Repository owner username.
-#         repo: Repository name.
-#         path: Path to the file within the repository.
-    
-#     Returns:
-#         File content and metadata.
-#     """
-#     if not github_client:
-#         raise Exception("GitHub token not configured")
-    
-#     logger.info(f">>> Tool: 'get_file_content' called for {owner}/{repo}/{path}")
-    
-#     endpoint = f"/repos/{owner}/{repo}/contents/{path}"
-#     file_data = await github_client.make_request(endpoint)
-    
-#     if file_data["type"] != "file":
-#         raise Exception(f"Path '{path}' is not a file")
-    
-#     # Decode base64 content
-#     content = base64.b64decode(file_data["content"]).decode('utf-8')
-    
-#     return {
-#         "name": file_data["name"],
-#         "path": file_data["path"],
-#         "size": file_data["size"],
-#         "content": content,
-#         "sha": file_data["sha"],
-#         "encoding": file_data["encoding"]
-#     }
 
 # @mcp.tool()
 @app.post("/tools/get_file_content")
-async def get_file_content(owner: str, repo: str, path: str, current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+async def get_file_content(request: Request):
     """Get the content of a specific file from a repository with security validation.
     
     Args:
@@ -257,7 +194,12 @@ async def get_file_content(owner: str, repo: str, path: str, current_user: Dict[
     if not github_client:
         raise Exception("GitHub token not configured")
     
-    logger.info(f">>> Tool: 'get_file_content' called by user {current_user.get('email')} for {owner}/{repo}/{path}")
+    args = await request.json()
+    owner = args["owner"]
+    repo = args["repo"]
+    path = args["path"]
+    
+    logger.info(f">>> Tool: 'get_file_content' called for {owner}/{repo}/{path}")
     
     endpoint = f"/repos/{owner}/{repo}/contents/{path}"
     
@@ -296,7 +238,6 @@ async def get_file_content(owner: str, repo: str, path: str, current_user: Dict[
             file_data["size"]
         )
 
-        print(validation_result)
         
         if not validation_result['allowed']:
             return {
@@ -341,7 +282,7 @@ async def get_file_content(owner: str, repo: str, path: str, current_user: Dict[
 
 # @mcp.tool()
 @app.post("/tools/search_code")
-async def search_code(query: str, owner: Optional[str] = None, repo: Optional[str] = None, current_user: Dict[str, Any] = Depends(get_current_user)) -> List[Dict[str, Any]]:
+async def search_code(query: str, owner: Optional[str] = None, repo: Optional[str] = None) -> List[Dict[str, Any]]:
     """Search for code across repositories.
     
     Args:
@@ -355,7 +296,7 @@ async def search_code(query: str, owner: Optional[str] = None, repo: Optional[st
     if not github_client:
         raise Exception("GitHub token not configured")
     
-    logger.info(f">>> Tool: 'search_code' called by {current_user.get('email')} with query '{query}'")
+    logger.info(f">>> Tool: 'search_code' called with query '{query}'")
     
     # Build search query
     search_query = query
@@ -382,7 +323,7 @@ async def search_code(query: str, owner: Optional[str] = None, repo: Optional[st
 # @mcp.tool()
 
 @app.post("/tools/get_repository_languages")
-async def get_repository_languages(owner: str, repo: str, current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, int]:
+async def get_repository_languages(owner: str, repo: str) -> Dict[str, int]:
     """Get programming languages used in a repository.
     
     Args:
@@ -395,7 +336,7 @@ async def get_repository_languages(owner: str, repo: str, current_user: Dict[str
     if not github_client:
         raise Exception("GitHub token not configured")
     
-    logger.info(f">>> Tool: 'get_repository_languages' by {current_user.get('email')} called for {owner}/{repo}")
+    logger.info(f">>> Tool: 'get_repository_languages' called for {owner}/{repo}")
     
     endpoint = f"/repos/{owner}/{repo}/languages"
     return await github_client.make_request(endpoint)
@@ -404,7 +345,7 @@ async def get_repository_languages(owner: str, repo: str, current_user: Dict[str
 
 
 @app.post("/tools/get_user_info")
-async def get_user_info(username: Optional[str] = None, current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+async def get_user_info(username: Optional[str] = None) -> Dict[str, Any]:
     """Get information about a GitHub user.
     
     Args:
@@ -416,7 +357,7 @@ async def get_user_info(username: Optional[str] = None, current_user: Dict[str, 
     if not github_client:
         raise Exception("GitHub token not configured")
     
-    logger.info(f">>> Tool: 'get_user_info' called by {current_user.get('email')} for user '{username or 'authenticated user'}'")
+    logger.info(f">>> Tool: 'get_user_info' called for user '{username or 'authenticated user'}'")
     
     if username:
         endpoint = f"/users/{username}"

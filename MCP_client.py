@@ -404,10 +404,10 @@ class AuthenticatedMCPClient:
                 async with session.post(
                     f"{self.mcp_server_url}/tools/{tool_name}",
                     json=parameters,
-                    headers={
-                        **self.headers,
-                        'Content-Type': 'application/json'
-                    }
+                    # headers={
+                    #     **self.headers,
+                    #     'Content-Type': 'application/json'
+                    # }
                 ) as response:
                     if response.status == 401:
                         raise HTTPException(
@@ -420,7 +420,8 @@ class AuthenticatedMCPClient:
                     
                     result = await response.json()
                     # Return result in format expected by existing code
-                    return [type('Result', (), {'text': result.get('result', '')})()]
+                    # return [type('Result', (), {'text': result.get('result', '')})()]
+                    return result
         except Exception as e:
             logger.error(f"Error calling tool {tool_name}: {e}")
             raise
@@ -453,8 +454,7 @@ class MCPBridge:
         """Initialize the MCP connection with JWT token and get available tools"""
         try:
             self.mcp_client = AuthenticatedMCPClient(self.mcp_server_url, jwt_token)
-            print("mcp client", self.mcp_client)
-            print("yha bhi aayi call")
+
             # self.available_tools = await self.mcp_client.create_tools()
             self.available_tools = [
                 {
@@ -591,11 +591,9 @@ class MCPBridge:
     def get_tools_for_openai(self) -> List[Dict[str, Any]]:
         """Convert MCP tools to OpenAI function calling format"""
         openai_tools = []
-        # print("tools for openai")
-        # print(self.available_tools)
+
         for tool in self.available_tools:
-            # Create OpenAI tool definition
-            # print(tool)
+
             tool_def = {
                 "type": "function",
                 "function": {
@@ -617,8 +615,6 @@ class MCPBridge:
                     tool_def["function"]["parameters"]["required"] = tool['inputSchema']['required']
             
             openai_tools.append(tool_def)
-
-        print("OpenAI tools:", openai_tools)
         
         return openai_tools
 
@@ -656,7 +652,8 @@ class MCPBridge:
                 raise Exception("MCP client not initialized with authentication")
             
             result = await self.mcp_client.call_tool(tool_name, parameters)
-            return result[0].text if result else "No result returned"
+            # return result[0].text if result else "No result returned"
+            return result
         except Exception as e:
             logger.error(f"Error calling MCP tool {tool_name}: {e}")
             return f"Error executing {tool_name}: {str(e)}"
@@ -778,11 +775,6 @@ If you need to use multiple tools or chain operations, do so to provide the most
     async def process_chat_message_chatgpt(self, message: str, conversation_id: str, model_name: str = "gpt-4o-mini", jwt_token: str = None) -> ChatResponse:
         """Process a chat message using ChatGPT with MCP tool integration"""
         tools_used = []
-        print("process_chat_message_chatgpt")
-        print(message)
-        print(conversation_id)
-        print(model_name)
-        print(jwt_token)
         
         # Initialize MCP client with token if provided
         if jwt_token and not self.mcp_client:
@@ -791,8 +783,6 @@ If you need to use multiple tools or chain operations, do so to provide the most
         try:
             # Get OpenAI-formatted tools
             openai_tools = self.get_tools_for_openai()
-
-            print("openai_tools", openai_tools)
             
             # Create system message explaining available tools
             system_message = f"""You are an AI assistant with access to various tools through an MCP (Model Context Protocol) server.
@@ -832,6 +822,9 @@ If you need to use multiple tools or chain operations, do so to provide the most
                 for tool_call in assistant_message.tool_calls:
                     tool_name = tool_call.function.name
                     tool_args = json.loads(tool_call.function.arguments)
+
+                    print("tool_name", tool_name)
+                    print("tool_args", tool_args)
                     
                     logger.info(f"Calling tool: {tool_name} with args: {tool_args}")
                     tools_used.append(tool_name)
@@ -841,10 +834,9 @@ If you need to use multiple tools or chain operations, do so to provide the most
                     tool_results.append({
                         "tool_call_id": tool_call.id,
                         "role": "tool",
-                        "name": tool_name,
-                        "content": result
+                        "name": result["name"],
+                        "content": result["content"]
                     })
-                # print("tool_results", tool_results)
 
                 # Add tool results to conversation and get final response
                 messages.append({
