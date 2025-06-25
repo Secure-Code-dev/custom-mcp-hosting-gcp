@@ -253,17 +253,17 @@ async def interactive_chat():
             return
     
     # Check available tools
-    print("Checking available tools...")
-    tools_response = await client.list_available_tools()
-    print("tools_response", tools_response)
-    if "error" not in tools_response:
-        tools = tools_response.get("tools", [])
-        print(f"✅ Connected! Available tools: {len(tools)}")
-        for tool in tools:
-            print(f"  • {tool['name']}: {tool['description']}")
-    else:
-        print(f"❌ Error getting tools: {tools_response['error']}")
-        return
+    # print("Checking available tools...")
+    # tools_response = await client.list_available_tools()
+    # print("tools_response", tools_response)
+    # if "error" not in tools_response:
+    #     tools = tools_response.get("tools", [])
+    #     print(f"✅ Connected! Available tools: {len(tools)}")
+    #     for tool in tools:
+    #         print(f"  • {tool['name']}: {tool['description']}")
+    # else:
+    #     print(f"❌ Error getting tools: {tools_response['error']}")
+    #     return
     
     print("\nAvailable AI Models:")
     print("  • chatgpt (default) - OpenAI GPT models")
