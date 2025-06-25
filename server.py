@@ -12,7 +12,6 @@ from fastapi.responses import RedirectResponse, JSONResponse
 from fastmcp import FastMCP
 from validations import ContentValidator
 from dotenv import load_dotenv
-from mcp_client import get_current_user
 load_dotenv()
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
