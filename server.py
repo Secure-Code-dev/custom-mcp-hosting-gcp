@@ -389,6 +389,7 @@ if __name__ == "__main__":
     
     logger.info("MCP server with authentication started")
     logger.info(f"Server will require JWT authentication for all tool calls")
+    logger.info(f"{os.getenv('PORT')}")
     logger.info(f"MCP server started on port {os.getenv('PORT', 8080)}")
     
     # Could also use 'sse' transport, host="0.0.0.0" required for Cloud Run.

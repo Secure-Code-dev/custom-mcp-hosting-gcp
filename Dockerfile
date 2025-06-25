@@ -1,20 +1,31 @@
-# Use the official Python lightweight image
-FROM python:3.13-slim
+FROM python:3.11-slim as builder
 
-# Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-
-# Install the project into /app
-COPY . /app
 WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
 
-# Allow statements and log messages to immediately appear in the logs
-ENV PYTHONUNBUFFERED=1
+# Base distroless stage
+FROM gcr.io/distroless/python3:latest as base
+WORKDIR /app
+COPY --from=builder /root/.local /root/.local
+ENV PATH=/root/.local/bin:$PATH
 
-# Install dependencies
-RUN uv sync
+# Server stage
+FROM base as server
+COPY server.py ./
+# Copy all Python files and directories to the server
+COPY *.py ./
+# Only copy directories that might exist
+COPY . ./
+EXPOSE 8080
+CMD ["server.py"]
 
-EXPOSE $PORT
-
-# Run the FastMCP server
-CMD ["uv", "run", "server.py"]
+# Client stage
+FROM base as client
+COPY MCP_client.py ./
+# Copy all Python files and directories to the client
+COPY *.py ./
+# Copy everything to ensure all dependencies are available
+COPY . ./
+EXPOSE 8000
+CMD ["MCP_client.py"]

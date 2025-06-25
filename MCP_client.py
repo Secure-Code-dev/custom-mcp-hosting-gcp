@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from fastmcp import Client
+# from fastmcp import Client
 import openai
 import anthropic
 import os
@@ -1054,9 +1054,6 @@ app.add_middleware(
 async def chat_endpoint(request_body: ChatRequest, request: Request):
 
     auth_header = request.headers.get("Authorization")
-    
-    # Optionally, log or pass headers to the bridge
-    print("Authorization Header:", auth_header)
 
     # Process message
     return await bridge.process_chat_message(
