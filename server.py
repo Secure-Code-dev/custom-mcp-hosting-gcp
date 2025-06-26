@@ -141,7 +141,7 @@ async def list_repositories(username: Optional[str] = None) -> List[Dict[str, An
 
 # @mcp.tool()
 @app.post("/tools/get_repository_contents")
-async def get_repository_contents(owner: str, repo: str, path: str = "") -> List[Dict[str, Any]]:
+async def get_repository_contents(request: Request) -> List[Dict[str, Any]]:
     """Get contents of a repository directory or file.
     
     Args:
@@ -154,6 +154,11 @@ async def get_repository_contents(owner: str, repo: str, path: str = "") -> List
     """
     if not github_client:
         raise Exception("GitHub token not configured")
+    
+    args = await request.json()
+    owner = args["owner"]
+    repo = args["repo"]
+    path = args.get("path", "")
     
     logger.info(f">>> Tool: 'get_repository_contents' called for {owner}/{repo} path '{path}'")
     

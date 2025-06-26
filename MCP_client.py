@@ -425,7 +425,7 @@ class AuthenticatedMCPClient:
             raise
 
 class MCPBridge:
-    def __init__(self, mcp_server_url: str = "http://localhost:8080"):
+    def __init__(self, mcp_server_url: str = "http://container1:8080"):
         self.mcp_server_url = mcp_server_url
         self.mcp_client = None
         
@@ -832,21 +832,26 @@ If you need to use multiple tools or chain operations, do so to provide the most
                     # Call the MCP tool
                     result = await self.call_mcp_tool(tool_name, tool_args)
 
-                    if result["name"] and result["content"]:
+                    # print("result", result)
+
+                    if tool_name == "get_file_content":
+
                         tool_results.append({
                             "tool_call_id": tool_call.id,
                             "role": "tool",
                             "name": result["name"],
                             "content": result["content"]
                         })
-                    else:
+                    elif tool_name == "get_repository_contents":
+                        print("get_repository_contents block")
                         tool_results.append({
                             "tool_call_id": tool_call.id,
                             "role": "tool",
-                            "result": result
+                            "result": result,
+                            "content": ""
                         })
 
-
+                # print("tool_results ", tool_results)
                 # Add tool results to conversation and get final response
                 messages.append({
                     "role": "assistant", 
@@ -862,8 +867,9 @@ If you need to use multiple tools or chain operations, do so to provide the most
                         } for tc in assistant_message.tool_calls
                     ]
                 })
-                
+                # print("messages ", messages)
                 messages.extend(tool_results)
+                # print("messages ", messages)
 
                 # Get final response with tool results
                 final_response = await self.openai_client.chat.completions.create(
@@ -871,8 +877,11 @@ If you need to use multiple tools or chain operations, do so to provide the most
                     messages=messages,
                     max_tokens=1500
                 )
+                # print("final response", final_response)
+
                 
                 final_content = final_response.choices[0].message.content
+                # print("final content", final_content)
             else:
                 final_content = assistant_message.content
 
