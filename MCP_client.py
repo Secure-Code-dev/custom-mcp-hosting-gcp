@@ -47,9 +47,6 @@ OAUTH_PROVIDERS = {
     }
 }
 
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-print(client.models.list())
-
 # JWT Configuration
 JWT_SECRET = os.getenv('JWT_SECRET', secrets.token_urlsafe(32))
 JWT_ALGORITHM = 'HS256'
@@ -799,7 +796,6 @@ For example:
 
 If you need to use multiple tools or chain operations, do so to provide the most complete answer possible."""
 
-            print("printing just before calling")
             messages = [
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": message}
@@ -818,7 +814,6 @@ If you need to use multiple tools or chain operations, do so to provide the most
 
             # Process the response
             assistant_message = response.choices[0].message
-            print("assistant_message", assistant_message)
             
             # Handle tool calls if any
             if assistant_message.tool_calls:
@@ -836,12 +831,21 @@ If you need to use multiple tools or chain operations, do so to provide the most
                     
                     # Call the MCP tool
                     result = await self.call_mcp_tool(tool_name, tool_args)
-                    tool_results.append({
-                        "tool_call_id": tool_call.id,
-                        "role": "tool",
-                        "name": result["name"],
-                        "content": result["content"]
-                    })
+
+                    if result["name"] and result["content"]:
+                        tool_results.append({
+                            "tool_call_id": tool_call.id,
+                            "role": "tool",
+                            "name": result["name"],
+                            "content": result["content"]
+                        })
+                    else:
+                        tool_results.append({
+                            "tool_call_id": tool_call.id,
+                            "role": "tool",
+                            "result": result
+                        })
+
 
                 # Add tool results to conversation and get final response
                 messages.append({
