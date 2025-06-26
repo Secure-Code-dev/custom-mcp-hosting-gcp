@@ -716,13 +716,30 @@ If you need to use multiple tools or chain operations, do so to provide the most
                     
                     # Call the MCP tool
                     result = await self.call_mcp_tool(tool_name, tool_args)
+
+                    print("result for claude ", result)
                     
-                    logger.info(f"Tool result: {result}")
-                    tool_results.append({
-                        "tool_use_id": tool_call.id,
-                        "type": "tool_result",
-                        "content": result
-                    })
+                    if tool_name == "get_file_content":
+    
+                        tool_results.append({
+                            "tool_call_id": tool_call.id,
+                            "role": "tool",
+                            "name": result["name"],
+                            "content": result["content"]
+                        })
+                    elif tool_name == "get_repository_contents":
+                        print("get_repository_contents block")
+                        tool_results.append({
+                            "tool_call_id": tool_call.id,
+                            "role": "tool",
+                            "content": result
+                        })
+                    else:
+                        tool_results.append({
+                            "tool_call_id": tool_call.id,
+                            "role": "tool",
+                            "content": result
+                        })
 
                 # Get final response with tool results
                 messages = [
@@ -733,7 +750,6 @@ If you need to use multiple tools or chain operations, do so to provide the most
 
                 final_response = await self.anthropic_client.messages.create(
                     model=model_name,
-                    max_tokens=1500,
                     system=system_message,
                     messages=messages
                 )
@@ -807,12 +823,8 @@ If you need to use multiple tools or chain operations, do so to provide the most
                 messages=messages,
                 tools=openai_tools if openai_tools else None,
                 tool_choice="auto" if openai_tools else None,
-                max_tokens=1500
             )
 
-
-
-            # Process the response
             assistant_message = response.choices[0].message
             
             # Handle tool calls if any
@@ -832,8 +844,6 @@ If you need to use multiple tools or chain operations, do so to provide the most
                     # Call the MCP tool
                     result = await self.call_mcp_tool(tool_name, tool_args)
 
-                    # print("result", result)
-
                     if tool_name == "get_file_content":
 
                         tool_results.append({
@@ -847,11 +857,19 @@ If you need to use multiple tools or chain operations, do so to provide the most
                         tool_results.append({
                             "tool_call_id": tool_call.id,
                             "role": "tool",
-                            "result": result,
-                            "content": ""
+                            "name": tool_name,
+                            "content": result
+                        })
+                    else:
+                        tool_results.append({
+                            "tool_call_id": tool_call.id,
+                            "role": "tool",
+                            "name": tool_name,
+                            "content": result
                         })
 
-                # print("tool_results ", tool_results)
+                print("assistant_message.content ", assistant_message.content)
+
                 # Add tool results to conversation and get final response
                 messages.append({
                     "role": "assistant", 
@@ -875,7 +893,6 @@ If you need to use multiple tools or chain operations, do so to provide the most
                 final_response = await self.openai_client.chat.completions.create(
                     model=model_name,
                     messages=messages,
-                    max_tokens=1500
                 )
                 # print("final response", final_response)
 
