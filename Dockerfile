@@ -1,31 +1,53 @@
+# Builder stage with UV
 FROM python:3.11-slim as builder
 
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+# Install UV
+RUN pip install --no-cache-dir uv
 
-# Base distroless stage
-FROM gcr.io/distroless/python3:latest as base
 WORKDIR /app
-COPY --from=builder /root/.local /root/.local
-ENV PATH=/root/.local/bin:$PATH
+
+# Copy requirements file
+COPY requirements.txt .
+
+# Install dependencies using UV to a target directory
+RUN uv pip install --target /opt/deps -r requirements.txt
+# COPY ./requirements.txt ./uv.lock ./
+
+# COPY uv.lock . 
+# RUN uv pip install --target /opt/deps --from-lock uv.lock
+
+# Base stage using python slim instead of distroless
+FROM python:3.11-slim as base
+
+# Create non-root user for security
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+WORKDIR /app
+
+# Copy the installed packages from builder
+COPY --from=builder /opt/deps /opt/deps
+ENV PYTHONPATH="/opt/deps:$PYTHONPATH"
+
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /app
+USER appuser
 
 # Server stage
 FROM base as server
-COPY server.py ./
+COPY --chown=appuser:appuser server.py ./
 # Copy all Python files and directories to the server
-COPY *.py ./
-# Only copy directories that might exist
-COPY . ./
+COPY --chown=appuser:appuser *.py ./
+# Copy everything to ensure all dependencies are available
+COPY --chown=appuser:appuser . ./
 EXPOSE 8080
-CMD ["server.py"]
+CMD ["python", "server.py"]
 
 # Client stage
 FROM base as client
-COPY MCP_client.py ./
+COPY --chown=appuser:appuser MCP_client.py ./
 # Copy all Python files and directories to the client
-COPY *.py ./
+COPY --chown=appuser:appuser *.py ./
 # Copy everything to ensure all dependencies are available
-COPY . ./
+COPY --chown=appuser:appuser . ./
 EXPOSE 8000
-CMD ["MCP_client.py"]
+CMD ["python", "MCP_client.py"]

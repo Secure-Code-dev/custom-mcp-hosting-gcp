@@ -47,6 +47,9 @@ OAUTH_PROVIDERS = {
     }
 }
 
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+print(client.models.list())
+
 # JWT Configuration
 JWT_SECRET = os.getenv('JWT_SECRET', secrets.token_urlsafe(32))
 JWT_ALGORITHM = 'HS256'
@@ -136,7 +139,6 @@ class OAuthClient:
         
         
         if self.provider == 'google':
-            print("yes, google")
             params = {
                 'client_id': self.config['client_id'],
                 'redirect_uri': f"{REDIRECT_URI}/google",
@@ -145,7 +147,6 @@ class OAuthClient:
                 'response_type': 'code'
             }
             params['access_type'] = 'offline'
-            print(params)
         else:
             params = {
                 'client_id': self.config['client_id'],
@@ -432,16 +433,16 @@ class MCPBridge:
         self.mcp_client = None
         
         # Initialize OpenAI client
-        try:
-            self.openai_client = openai.AsyncOpenAI(
-                api_key=os.getenv("OPENAI_API_KEY"),
-                timeout=60.0
-            )
-        except TypeError as e:
-            if "proxies" in str(e):
-                self.openai_client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            else:
-                raise e
+        # try:
+        self.openai_client = openai.AsyncOpenAI(
+            api_key=os.getenv("OPENAI_API_KEY")
+        )
+        # except TypeError as e:
+        #     if "proxies" in str(e):
+        #         print("going in proxies")
+        #         self.openai_client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        #     else:
+        #         raise e
         
         # Initialize Anthropic client
         self.anthropic_client = anthropic.AsyncAnthropic(
@@ -798,6 +799,7 @@ For example:
 
 If you need to use multiple tools or chain operations, do so to provide the most complete answer possible."""
 
+            print("printing just before calling")
             messages = [
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": message}
@@ -812,8 +814,11 @@ If you need to use multiple tools or chain operations, do so to provide the most
                 max_tokens=1500
             )
 
+
+
             # Process the response
             assistant_message = response.choices[0].message
+            print("assistant_message", assistant_message)
             
             # Handle tool calls if any
             if assistant_message.tool_calls:
