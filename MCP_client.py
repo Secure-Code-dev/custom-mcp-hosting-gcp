@@ -685,7 +685,7 @@ If you need to use multiple tools or chain operations, do so to provide the most
             # Call Claude with tools
             response = await self.anthropic_client.messages.create(
                 model=model_name,
-                max_tokens=1500,
+                max_tokens=2500,
                 system=system_message,
                 messages=[
                     {"role": "user", "content": message}
@@ -716,15 +716,12 @@ If you need to use multiple tools or chain operations, do so to provide the most
                     
                     # Call the MCP tool
                     result = await self.call_mcp_tool(tool_name, tool_args)
-
-                    print("result for claude ", result)
                     
                     if tool_name == "get_file_content":
     
                         tool_results.append({
-                            "tool_call_id": tool_call.id,
-                            "role": "tool",
-                            "name": result["name"],
+                            "tool_use_id": tool_call.id,
+                            "type": "tool_result",
                             "content": result["content"]
                         })
                     elif tool_name == "get_repository_contents":
@@ -740,6 +737,7 @@ If you need to use multiple tools or chain operations, do so to provide the most
                             "role": "tool",
                             "content": result
                         })
+                    
 
                 # Get final response with tool results
                 messages = [
@@ -748,8 +746,10 @@ If you need to use multiple tools or chain operations, do so to provide the most
                     {"role": "user", "content": tool_results}
                 ]
 
+
                 final_response = await self.anthropic_client.messages.create(
                     model=model_name,
+                    max_tokens=2500,
                     system=system_message,
                     messages=messages
                 )
@@ -854,11 +854,14 @@ If you need to use multiple tools or chain operations, do so to provide the most
                         })
                     elif tool_name == "get_repository_contents":
                         print("get_repository_contents block")
+                        tool_content = "Here are the files in the repo:\n" + "\n".join(
+                            f"- {item['name']}" for item in result
+                        )
                         tool_results.append({
                             "tool_call_id": tool_call.id,
                             "role": "tool",
                             "name": tool_name,
-                            "content": result
+                            "content": tool_content
                         })
                     else:
                         tool_results.append({
@@ -887,8 +890,9 @@ If you need to use multiple tools or chain operations, do so to provide the most
                 })
                 # print("messages ", messages)
                 messages.extend(tool_results)
-                # print("messages ", messages)
+                print("messages ", messages)
 
+                # print("tool_results ", tool_results)
                 # Get final response with tool results
                 final_response = await self.openai_client.chat.completions.create(
                     model=model_name,

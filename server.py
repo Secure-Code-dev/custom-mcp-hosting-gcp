@@ -173,7 +173,7 @@ async def get_repository_contents(request: Request) -> List[Dict[str, Any]]:
         {
             "name": item["name"],
             "path": item["path"],
-            "type": item["type"],
+            "type": "text",
             "size": item.get("size", 0),
             "download_url": item.get("download_url"),
             "html_url": item.get("html_url")
