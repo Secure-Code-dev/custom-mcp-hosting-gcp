@@ -205,7 +205,8 @@ async def get_file_content(request: Request):
     
     logger.info(f">>> Tool: 'get_file_content' called for {owner}/{repo}/{path}")
     
-    endpoint = f"/repos/{owner}/{repo}/contents/{path}"
+    branch = args.get("branch", "main")  # default to "main"
+    endpoint = f"/repos/{owner}/{repo}/contents/{path}?ref={branch}"
     
     try:
         file_data = await github_client.make_request(endpoint)

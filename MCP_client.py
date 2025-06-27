@@ -456,32 +456,6 @@ class MCPBridge:
             # self.available_tools = await self.mcp_client.create_tools()
             self.available_tools = [
                 {
-                    "name": "add",
-                    "description": "Use this to add two numbers together.",
-                    "inputSchema": {
-                        "type": "object",
-                        "properties": {
-                            "a": {"title": "A", "type": "integer"},
-                            "b": {"title": "B", "type": "integer"}
-                        },
-                        "required": ["a", "b"]
-                    },
-                    "annotations": None
-                },
-                {
-                    "name": "subtract",
-                    "description": "Use this to subtract two numbers.",
-                    "inputSchema": {
-                        "type": "object",
-                        "properties": {
-                            "a": {"title": "A", "type": "integer"},
-                            "b": {"title": "B", "type": "integer"}
-                        },
-                        "required": ["a", "b"]
-                    },
-                    "annotations": None
-                },
-                {
                     "name": "list_repositories",
                     "description": "List repositories for the authenticated user or a specific username.",
                     "inputSchema": {
@@ -518,7 +492,8 @@ class MCPBridge:
                         "properties": {
                             "owner": {"title": "Owner", "type": "string"},
                             "repo": {"title": "Repo", "type": "string"},
-                            "path": {"title": "Path", "type": "string"}
+                            "path": {"title": "Path", "type": "string"},
+                            "branch": {"default": "main", "title": "Branch", "type": "string"}
                         },
                         "required": ["owner", "repo", "path"]
                     },
@@ -850,10 +825,9 @@ If you need to use multiple tools or chain operations, do so to provide the most
                             "tool_call_id": tool_call.id,
                             "role": "tool",
                             "name": result["name"],
-                            "content": result["content"]
+                            "content": f'{result["content"]} \n\n{result["source_url"]}'
                         })
                     elif tool_name == "get_repository_contents":
-                        print("get_repository_contents block")
                         tool_content = "Here are the files in the repo:\n" + "\n".join(
                             f"- {item['name']}" for item in result
                         )
@@ -871,7 +845,6 @@ If you need to use multiple tools or chain operations, do so to provide the most
                             "content": result
                         })
 
-                print("assistant_message.content ", assistant_message.content)
 
                 # Add tool results to conversation and get final response
                 messages.append({
@@ -888,21 +861,16 @@ If you need to use multiple tools or chain operations, do so to provide the most
                         } for tc in assistant_message.tool_calls
                     ]
                 })
-                # print("messages ", messages)
                 messages.extend(tool_results)
-                print("messages ", messages)
 
-                # print("tool_results ", tool_results)
                 # Get final response with tool results
                 final_response = await self.openai_client.chat.completions.create(
                     model=model_name,
                     messages=messages,
                 )
-                # print("final response", final_response)
 
                 
                 final_content = final_response.choices[0].message.content
-                # print("final content", final_content)
             else:
                 final_content = assistant_message.content
 
