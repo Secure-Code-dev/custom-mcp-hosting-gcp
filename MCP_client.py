@@ -700,17 +700,22 @@ If you need to use multiple tools or chain operations, do so to provide the most
                             "content": result["content"]
                         })
                     elif tool_name == "get_repository_contents":
-                        print("get_repository_contents block")
+                        tool_content = "Here are the files in the repo:\n" + "\n".join(
+                            f"- {item['name']}" for item in result
+                        )
                         tool_results.append({
-                            "tool_call_id": tool_call.id,
-                            "role": "tool",
-                            "content": result
+                            "tool_use_id": tool_call.id,
+                            "type": "tool_result",
+                            "content": tool_content
                         })
-                    else:
+                    elif tool_name == "list_repositories":
+                        tool_content = "Here are the repos:\n" + "\n".join(
+                            f"- {item['name']} - {item['html_url']}" for item in result
+                        )
                         tool_results.append({
-                            "tool_call_id": tool_call.id,
-                            "role": "tool",
-                            "content": result
+                            "tool_use_id": tool_call.id,
+                            "type": "tool_result",
+                            "content": tool_content
                         })
                     
 
@@ -837,12 +842,15 @@ If you need to use multiple tools or chain operations, do so to provide the most
                             "name": tool_name,
                             "content": tool_content
                         })
-                    else:
+                    elif tool_name == "list_repositories":
+                        tool_content = "Here are the repos:\n" + "\n".join(
+                            f"- {item['name']} - {item['html_url']}" for item in result
+                        )
                         tool_results.append({
                             "tool_call_id": tool_call.id,
                             "role": "tool",
                             "name": tool_name,
-                            "content": result
+                            "content": tool_content
                         })
 
 
