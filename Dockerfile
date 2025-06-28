@@ -19,6 +19,8 @@ RUN uv pip install --target /opt/deps -r requirements.txt
 # Base stage using python slim instead of distroless
 FROM python:3.11-slim as base
 
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
+
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
